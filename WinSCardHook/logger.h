@@ -6,10 +6,10 @@
 
 namespace LOGGER
 {
-	static const std::string strFatalPrefix = "Fatal\t";
-	static const std::string strErrorPrefix = "Error\t";
-	static const std::string strWarningPrefix = "Warning\t";
-	static const std::string strInfoPrefix = "Info\t";
+	static const std::string strFatalPrefix = "FATAL\t";
+	static const std::string strErrorPrefix = "ERROR\t";
+	static const std::string strWarningPrefix = "WARN\t";
+	static const std::string strInfoPrefix = "INFO\t";
 
 	typedef enum EnumLogLevel
 	{
@@ -39,12 +39,13 @@ namespace LOGGER
 		std::string FormatString(const char *lpcszFormat, ...);
 		const char *path_file(const char *path, char splitter);
 	private:
-		FILE * m_pFileStream;
-		EnumLogLevel m_nLogLevel;
-		std::string m_strLogPath;
-		std::string m_strLogName;
-		std::string m_strLogFilePath;
-		CRITICAL_SECTION m_cs;
+		FILE*				m_pFileStream;
+		EnumLogLevel		m_nLogLevel;
+		std::string			m_strLogPath;
+		std::string			m_strLogName;
+		std::string			m_strLogFilePath;
+		std::string			m_strProcessName;
+		CRITICAL_SECTION	m_cs;
 	};
 }
 #endif
