@@ -1,13 +1,14 @@
 #include "stdafx.h"
 #include <stdio.h>
+#include <mutex>
 #include <winscard.h>
 #include "mhook/mhook-lib/mhook.h"
 #include "Logger.h"
 
 
 // Global Variables
-FILE* fp_log = NULL;
-HMODULE hDll = 0;
+LOGGER::CLogger*	logger = NULL;
+HMODULE				g_hDll = 0;
 
 
 //typedef of WinSCard API function pointers
@@ -30,10 +31,10 @@ pHookSCardEstablishContext(
 	_Out_		LPSCARDCONTEXT	phContext
 )
 {
-	//LONG lRet;
-	LOGGER::CLogger logger(LOGGER::LogLevel_Info, "C:\\Logs\\", "_WinSCardHook.log");
-	logger.TraceInfo("SCardEstablishContext");
-	logger.TraceInfo("IN dwScope: %d", dwScope);
+	if (logger) {
+		logger->TraceInfo("SCardEstablishContext");
+		logger->TraceInfo("IN dwScope: %d", dwScope);
+	}
 	return pOrigSCardEstablishContext(dwScope, pvReserved1, pvReserved2, phContext);
 }
 
@@ -44,9 +45,9 @@ pHookSCardReleaseContext(
 	_In_	SCARDCONTEXT	hContext
 )
 {
-	//LONG lRet;
-	//LOGGER::CLogger logger(LOGGER::LogLevel_Info, "C:\\Logs\\", "_WinSCardHook.log");
-	//logger.TraceInfo("SCardReleaseContext");
+	if (logger) {
+		logger->TraceInfo("SCardReleaseContext");
+	}
 	return pOrigSCardReleaseContext(hContext);
 }
 
@@ -57,23 +58,25 @@ pHookSCardIsValidContext(
 	_In_	SCARDCONTEXT	hContext
 )
 {
-	//LONG lRet;
-	//LOGGER::CLogger logger(LOGGER::LogLevel_Info, "C:\\Logs\\", "_WinSCardHook.log");
-	//logger.TraceInfo("SCardIsValidContext");
+	if (logger) {
+		logger->TraceInfo("SCardIsValidContext");
+	}
 	return pOrigSCardIsValidContext(hContext);
 }
 
 
 //hookInitialize
 void hookInitialize() {
-	LOGGER::CLogger logger(LOGGER::LogLevel_Info, "C:\\Logs", "_hookInitialize.log");
-	logger.TraceInfo("hookInitialize");
-	hDll = LoadLibrary(L"winscard.dll");
+	if (logger) {
+		logger->TraceInfo("hookInitialize");
+	}
+
+	g_hDll = LoadLibrary(L"winscard.dll");
 	
 	//GetProcAddress
-	pOrigSCardEstablishContext = (PFN_SCARDESTABLISHCONTEXT)GetProcAddress(hDll, "SCardEstablishContext");
-	pOrigSCardReleaseContext = (PFN_SCARDRELEASECONTEXT)GetProcAddress(hDll, "SCardReleaseContext");
-	pOrigSCardIsValidContext = (PFN_SCARDISVALIDCONTEXT)GetProcAddress(hDll, "SCardIsValidContext");
+	pOrigSCardEstablishContext = (PFN_SCARDESTABLISHCONTEXT)GetProcAddress(g_hDll, "SCardEstablishContext");
+	pOrigSCardReleaseContext = (PFN_SCARDRELEASECONTEXT)GetProcAddress(g_hDll, "SCardReleaseContext");
+	pOrigSCardIsValidContext = (PFN_SCARDISVALIDCONTEXT)GetProcAddress(g_hDll, "SCardIsValidContext");
 
 	//Mhook_SetHook
 	Mhook_SetHook((PVOID*)&pOrigSCardEstablishContext, pHookSCardEstablishContext);
@@ -84,8 +87,9 @@ void hookInitialize() {
 
 //hookFinalize
 void hookFinalize() {
-	LOGGER::CLogger logger(LOGGER::LogLevel_Info, "C:\\Logs", "_hookFinalize.log");
-	logger.TraceInfo("hookFinalize");
+	if (logger) {
+		logger->TraceInfo("hookFinalize");
+	}
 
 	//Mhook_Unhook
 	Mhook_Unhook((PVOID*)&pOrigSCardEstablishContext);
@@ -100,12 +104,9 @@ BOOL WINAPI DllMain(
     __in DWORD      Reason,
     __in LPVOID     Reserved
     )
-{        
-	HANDLE hFile = INVALID_HANDLE_VALUE;
-	char szMsg[MAX_PATH] = { 0 };
+{
+	logger = LOGGER::CLogger::getInstance(LOGGER::LogLevel_Info, "C:\\Logs\\", "");
 
-	LOGGER::CLogger logger(LOGGER::LogLevel_Info, "C:\\Logs", "_DllMain.log");
-	logger.TraceInfo("DllMain");
 	switch (Reason) {
 		case DLL_PROCESS_ATTACH:
 			hookInitialize();

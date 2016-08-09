@@ -20,32 +20,59 @@ namespace LOGGER
 		LogLevel_Info
 	};
 
+	class CriticalSection
+	{
+		CRITICAL_SECTION m_cs;
+	public:
+		CriticalSection()
+		{
+			::InitializeCriticalSection(&m_cs);
+		}
+		virtual ~CriticalSection()
+		{
+			::DeleteCriticalSection(&m_cs);
+		}
+		void Lock()
+		{
+			::EnterCriticalSection(&m_cs);
+		}
+		void Unlock()
+		{
+			::LeaveCriticalSection(&m_cs);
+		}
+	};
+
 	class CLogger
 	{
 	public:
-		CLogger(EnumLogLevel nLogLevel = EnumLogLevel::LogLevel_Info, const std::string strLogPath = "", const std::string strLogName = "");
+		static CLogger *getInstance(
+							const EnumLogLevel nLogLevel,
+							const std::string strLogPath = "",
+							const std::string strLogName = "");
 		virtual ~CLogger();
 	public:
-		void TraceFatal(const char *lpcszFormat, ...);
-		void TraceError(const char *lpcszFormat, ...);
-		void TraceWarning(const char *lpcszFormat, ...);
 		void TraceInfo(const char *lpcszFormat, ...);
 		void TraceInfoEx(const std::string msg = "");
 		void ChangeLogLevel(EnumLogLevel nLevel);
 	private:
+		CLogger(const EnumLogLevel nLogLevel = EnumLogLevel::LogLevel_Info,
+				const std::string strLogPath = "",
+				const std::string strLogName = "");
 		void Trace(const std::string &strLog);
 		std::string GetTime();
 		std::string GetAppPathA();
 		std::string FormatString(const char *lpcszFormat, ...);
 		const char *path_file(const char *path, char splitter);
 	private:
-		FILE*				m_pFileStream;
-		EnumLogLevel		m_nLogLevel;
-		std::string			m_strLogPath;
-		std::string			m_strLogName;
-		std::string			m_strLogFilePath;
-		std::string			m_strProcessName;
-		CRITICAL_SECTION	m_cs;
+		static CLogger*			m_Instance;
+		static CriticalSection	m_csInstance;
+		static CriticalSection	m_csLog;
+
+		FILE*			m_pFileStream;
+		EnumLogLevel	m_nLogLevel;
+		std::string		m_strLogPath;
+		std::string		m_strLogName;
+		std::string		m_strLogFilePath;
 	};
 }
 #endif
