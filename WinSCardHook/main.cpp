@@ -7,6 +7,9 @@
 
 
 // Global Variables
+#define				LOG_PATH		"C:\\Logs\\"
+#define				APP_HOOKING		L"C:\\Windows\\system32\\LogonUI.exe"
+#define				DLL_HOOKED		L"WinSCard.dll"
 LOGGER::CLogger*	logger = NULL;
 HMODULE				g_hDll = 0;
 
@@ -45,9 +48,7 @@ pHookSCardReleaseContext(
 	_In_	SCARDCONTEXT	hContext
 )
 {
-	if (logger) {
-		logger->TraceInfo("SCardReleaseContext");
-	}
+	if (logger) { logger->TraceInfo("SCardReleaseContext"); }
 	return pOrigSCardReleaseContext(hContext);
 }
 
@@ -58,43 +59,51 @@ pHookSCardIsValidContext(
 	_In_	SCARDCONTEXT	hContext
 )
 {
-	if (logger) {
-		logger->TraceInfo("SCardIsValidContext");
-	}
+	if (logger) { logger->TraceInfo("SCardIsValidContext"); }
 	return pOrigSCardIsValidContext(hContext);
+}
+
+
+//shouldHook
+bool shouldHook() {
+	wchar_t	wProcessName[MAX_PATH];
+	GetModuleFileName(NULL, wProcessName, MAX_PATH);
+	std::wstring ws(wProcessName);//convert wchar* to wstring
+	std::string strProcessName(ws.begin(), ws.end());
+	if (0 == wcscmp(APP_HOOKING, wProcessName)) {
+		if (logger) { logger->TraceInfo("%s is hooking onto %s", strProcessName.c_str(), DLL_HOOKED); }
+		return true;
+	} else {
+		if (logger) { logger->TraceInfo("%s is NOT hooking onto anything", strProcessName.c_str()); }
+	}
+	return false;
 }
 
 
 //hookInitialize
 void hookInitialize() {
-	if (logger) {
-		logger->TraceInfo("hookInitialize");
+	if (shouldHook()) {
+		g_hDll = LoadLibrary(DLL_HOOKED);
+		//GetProcAddress
+		pOrigSCardEstablishContext = (PFN_SCARDESTABLISHCONTEXT)GetProcAddress(g_hDll, "SCardEstablishContext");
+		pOrigSCardReleaseContext = (PFN_SCARDRELEASECONTEXT)GetProcAddress(g_hDll, "SCardReleaseContext");
+		pOrigSCardIsValidContext = (PFN_SCARDISVALIDCONTEXT)GetProcAddress(g_hDll, "SCardIsValidContext");
+		//Mhook_SetHook
+		Mhook_SetHook((PVOID*)&pOrigSCardEstablishContext, pHookSCardEstablishContext);
+		Mhook_SetHook((PVOID*)&pOrigSCardReleaseContext, pHookSCardReleaseContext);
+		Mhook_SetHook((PVOID*)&pOrigSCardIsValidContext, pHookSCardIsValidContext);
 	}
-
-	g_hDll = LoadLibrary(L"winscard.dll");
-	
-	//GetProcAddress
-	pOrigSCardEstablishContext = (PFN_SCARDESTABLISHCONTEXT)GetProcAddress(g_hDll, "SCardEstablishContext");
-	pOrigSCardReleaseContext = (PFN_SCARDRELEASECONTEXT)GetProcAddress(g_hDll, "SCardReleaseContext");
-	pOrigSCardIsValidContext = (PFN_SCARDISVALIDCONTEXT)GetProcAddress(g_hDll, "SCardIsValidContext");
-
-	//Mhook_SetHook
-	Mhook_SetHook((PVOID*)&pOrigSCardEstablishContext, pHookSCardEstablishContext);
-	Mhook_SetHook((PVOID*)&pOrigSCardReleaseContext, pHookSCardReleaseContext);
-	Mhook_SetHook((PVOID*)&pOrigSCardIsValidContext, pHookSCardIsValidContext);
 }
 
 
 //hookFinalize
 void hookFinalize() {
-	if (logger) {
-		logger->TraceInfo("hookFinalize");
+	if (shouldHook()) {
+		//Mhook_Unhook
+		Mhook_Unhook((PVOID*)&pOrigSCardEstablishContext);
+		Mhook_Unhook((PVOID*)&pOrigSCardReleaseContext);
+		Mhook_Unhook((PVOID*)&pOrigSCardIsValidContext);
 	}
-
-	//Mhook_Unhook
-	Mhook_Unhook((PVOID*)&pOrigSCardEstablishContext);
-	Mhook_Unhook((PVOID*)&pOrigSCardReleaseContext);
-	Mhook_Unhook((PVOID*)&pOrigSCardIsValidContext);
 }
 
 
@@ -105,7 +114,7 @@ BOOL WINAPI DllMain(
     __in LPVOID     Reserved
     )
 {
-	logger = LOGGER::CLogger::getInstance(LOGGER::LogLevel_Info, "C:\\Logs\\", "");
+	logger = LOGGER::CLogger::getInstance(LOGGER::LogLevel_Info, LOG_PATH, "");
 
 	switch (Reason) {
 		case DLL_PROCESS_ATTACH:
