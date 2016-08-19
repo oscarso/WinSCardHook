@@ -18,11 +18,9 @@ HMODULE				g_hDll = 0;
 typedef LONG(WINAPI *PFN_SCARDESTABLISHCONTEXT)(_In_ DWORD, _Reserved_ LPCVOID, _Reserved_ LPCVOID, _Out_ LPSCARDCONTEXT);
 typedef LONG(WINAPI *PFN_SCARDRELEASECONTEXT)(_In_ SCARDCONTEXT);
 typedef LONG(WINAPI *PFN_SCARDISVALIDCONTEXT)(_In_ SCARDCONTEXT);
-/*
 typedef LONG(WINAPI *PFN_SCARDFREEMEMORY)(_In_ SCARDCONTEXT, _In_ LPCVOID);
 typedef LONG(WINAPI *PFN_SCARDDISCONNECT)(_In_ SCARDHANDLE, _In_ DWORD);
-typedef LONG(WINAPI *PFN_SCARDCANCELTRANSACTION)(_In_ SCARDHANDLE);
-*/
+//typedef LONG(WINAPI *PFN_SCARDCANCELTRANSACTION)(_In_ SCARDHANDLE);
 typedef LONG(WINAPI *PFN_SCARDBEGINTRANSACTION)(_In_ SCARDHANDLE);
 typedef LONG(WINAPI *PFN_SCARDENDTRANSACTION)(_In_ SCARDHANDLE, _In_ DWORD);
 typedef LONG(WINAPI *PFN_SCARDTRANSMIT)(_In_ SCARDHANDLE, _In_ LPCSCARD_IO_REQUEST, _In_reads_bytes_(cbSendLength) LPCBYTE, _In_ DWORD, _Inout_opt_ LPSCARD_IO_REQUEST, _Out_writes_bytes_(*pcbRecvLength) LPBYTE, _Inout_ LPDWORD);
@@ -32,11 +30,9 @@ typedef LONG(WINAPI *PFN_SCARDTRANSMIT)(_In_ SCARDHANDLE, _In_ LPCSCARD_IO_REQUE
 PFN_SCARDESTABLISHCONTEXT	pOrigSCardEstablishContext = NULL;
 PFN_SCARDRELEASECONTEXT		pOrigSCardReleaseContext = NULL;
 PFN_SCARDISVALIDCONTEXT		pOrigSCardIsValidContext = NULL;
-/*
 PFN_SCARDFREEMEMORY			pOrigSCardFreeMemory = NULL;
 PFN_SCARDDISCONNECT			pOrigSCardDisconnect = NULL;
-PFN_SCARDCANCELTRANSACTION	pOrigSCardCancelTransaction = NULL;
-*/
+//PFN_SCARDCANCELTRANSACTION	pOrigSCardCancelTransaction = NULL;
 PFN_SCARDBEGINTRANSACTION	pOrigSCardBeginTransaction = NULL;
 PFN_SCARDENDTRANSACTION		pOrigSCardEndTransaction = NULL;
 PFN_SCARDTRANSMIT			pOrigSCardTransmit = NULL;
@@ -82,6 +78,20 @@ pHookSCardIsValidContext(
 
 
 #if 0
+//SCardCancelTransaction
+WINSCARDAPI LONG WINAPI
+pHookSCardCancelTransaction(
+	_In_	SCARDHANDLE	hCard
+)
+{
+	if (logger) {
+		logger->TraceInfo("SCardCancelTransaction");
+	}
+	return pOrigSCardCancelTransaction(hCard);
+}
+#endif
+
+
 //SCardFreeMemory
 WINSCARDAPI LONG WINAPI
 pHookSCardFreeMemory(
@@ -108,20 +118,6 @@ pHookSCardDisconnect(
 	}
 	return pOrigSCardDisconnect(hCard, dwDisposition);
 }
-
-
-//SCardCancelTransaction
-WINSCARDAPI LONG WINAPI
-pHookSCardCancelTransaction(
-	_In_	SCARDHANDLE	hCard
-)
-{
-	if (logger) {
-		logger->TraceInfo("SCardCancelTransaction");
-	}
-	return pOrigSCardCancelTransaction(hCard);
-}
-#endif
 
 
 //SCardBeginTransaction
@@ -194,11 +190,9 @@ void hookInitialize() {
 		 pOrigSCardEstablishContext = (PFN_SCARDESTABLISHCONTEXT)GetProcAddress(g_hDll, "SCardEstablishContext");
 		   pOrigSCardReleaseContext = (PFN_SCARDRELEASECONTEXT)GetProcAddress(g_hDll, "SCardReleaseContext");
 		   pOrigSCardIsValidContext = (PFN_SCARDISVALIDCONTEXT)GetProcAddress(g_hDll, "SCardIsValidContext");
-		   /*
-		       pOrigSCardFreeMemory = (PFN_SCARDFREEMEMORY)GetProcAddress(g_hDll, "SCardFreeMemory");
-		       pOrigSCardDisconnect = (PFN_SCARDDISCONNECT)GetProcAddress(g_hDll, "SCardDisconnect");
-		pOrigSCardCancelTransaction = (PFN_SCARDCANCELTRANSACTION)GetProcAddress(g_hDll, "SCardCancelTransaction");
-		*/
+			   pOrigSCardFreeMemory = (PFN_SCARDFREEMEMORY)GetProcAddress(g_hDll, "SCardFreeMemory");
+			   pOrigSCardDisconnect = (PFN_SCARDDISCONNECT)GetProcAddress(g_hDll, "SCardDisconnect");
+//pOrigSCardCancelTransaction = (PFN_SCARDCANCELTRANSACTION)GetProcAddress(g_hDll, "SCardCancelTransaction");
 		 pOrigSCardBeginTransaction = (PFN_SCARDBEGINTRANSACTION)GetProcAddress(g_hDll, "SCardBeginTransaction");
 		   pOrigSCardEndTransaction = (PFN_SCARDENDTRANSACTION)GetProcAddress(g_hDll, "SCardEndTransaction");
 		         pOrigSCardTransmit = (PFN_SCARDTRANSMIT)GetProcAddress(g_hDll, "SCardTransmit");
@@ -207,11 +201,9 @@ void hookInitialize() {
 		Mhook_SetHook((PVOID*)&pOrigSCardEstablishContext, pHookSCardEstablishContext);
 		Mhook_SetHook((PVOID*)&pOrigSCardReleaseContext, pHookSCardReleaseContext);
 		Mhook_SetHook((PVOID*)&pOrigSCardIsValidContext, pHookSCardIsValidContext);
-		/*
 		Mhook_SetHook((PVOID*)&pOrigSCardFreeMemory, pHookSCardFreeMemory);
 		Mhook_SetHook((PVOID*)&pOrigSCardDisconnect, pHookSCardDisconnect);
-		Mhook_SetHook((PVOID*)&pOrigSCardCancelTransaction, pHookSCardCancelTransaction);
-		*/
+//Mhook_SetHook((PVOID*)&pOrigSCardCancelTransaction, pHookSCardCancelTransaction);
 		Mhook_SetHook((PVOID*)&pOrigSCardBeginTransaction, pHookSCardBeginTransaction);
 		Mhook_SetHook((PVOID*)&pOrigSCardEndTransaction, pHookSCardEndTransaction);
 		Mhook_SetHook((PVOID*)&pOrigSCardTransmit, pHookSCardTransmit);
@@ -226,11 +218,9 @@ void hookFinalize() {
 		Mhook_Unhook((PVOID*)&pOrigSCardEstablishContext);
 		Mhook_Unhook((PVOID*)&pOrigSCardReleaseContext);
 		Mhook_Unhook((PVOID*)&pOrigSCardIsValidContext);
-		/*
 		Mhook_Unhook((PVOID*)&pOrigSCardFreeMemory);
 		Mhook_Unhook((PVOID*)&pOrigSCardDisconnect);
-		Mhook_Unhook((PVOID*)&pOrigSCardCancelTransaction);
-		*/
+//Mhook_Unhook((PVOID*)&pOrigSCardCancelTransaction);
 		Mhook_Unhook((PVOID*)&pOrigSCardBeginTransaction);
 		Mhook_Unhook((PVOID*)&pOrigSCardEndTransaction);
 		Mhook_Unhook((PVOID*)&pOrigSCardTransmit);
