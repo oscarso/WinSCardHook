@@ -9,7 +9,8 @@
 // Global Variables
 #define				LOG_PATH		"C:\\Logs\\"
 #define				APP_HOOKING		L"C:\\Windows\\system32\\LogonUI.exe"
-#define				DLL_HOOKED		TEXT("WinSCard.dll")
+#define				DLL_HOOKED_W	L"WinSCard.dll"
+#define				DLL_HOOKED		"WinSCard.dll"
 LOGGER::CLogger*	logger = NULL;
 HMODULE				g_hDll = 0;
 
@@ -23,10 +24,10 @@ typedef LONG	(WINAPI *PFN_SCARDDISCONNECT)(_In_ SCARDHANDLE, _In_ DWORD);
 typedef LONG	(WINAPI *PFN_SCARDBEGINTRANSACTION)(_In_ SCARDHANDLE);
 typedef LONG	(WINAPI *PFN_SCARDENDTRANSACTION)(_In_ SCARDHANDLE, _In_ DWORD);
 typedef LONG	(WINAPI *PFN_SCARDTRANSMIT)(_In_ SCARDHANDLE, _In_ LPCSCARD_IO_REQUEST, _In_reads_bytes_(cbSendLength) LPCBYTE, _In_ DWORD, _Inout_opt_ LPSCARD_IO_REQUEST, _Out_writes_bytes_(*pcbRecvLength) LPBYTE, _Inout_ LPDWORD);
+typedef HANDLE	(WINAPI *PFN_SCARDACCESSSTARTEDEVENT)(void);
+typedef void	(WINAPI *PFN_SCARDRELEASESTARTEDEVENT)(void);
 
-//typedef LONG		(WINAPI *PFN_SCARDCANCELTRANSACTION)(_In_ SCARDHANDLE);//CANNOT hook - cause RDP crash
-//typedef HANDLE	(WINAPI *PFN_SCARDACCESSSTARTEDEVENT)(void);//CANNOT hook - cause RDP crash
-//typedef void		(WINAPI *PFN_SCARDRELEASESTARTEDEVENT)(void);//CANNOT hook - cause RDP crash
+//typedef LONG	(WINAPI *PFN_SCARDCANCELTRANSACTION)(_In_ SCARDHANDLE);//CANNOT hook - cause RDP crash
 
 
 //initialization of WinSCard API function pointers
@@ -38,6 +39,8 @@ PFN_SCARDDISCONNECT				pOrigSCardDisconnect = NULL;
 PFN_SCARDBEGINTRANSACTION		pOrigSCardBeginTransaction = NULL;
 PFN_SCARDENDTRANSACTION			pOrigSCardEndTransaction = NULL;
 PFN_SCARDTRANSMIT				pOrigSCardTransmit = NULL;
+PFN_SCARDACCESSSTARTEDEVENT		pOrigSCardAccessStartedEvent = NULL;
+PFN_SCARDRELEASESTARTEDEVENT	pOrigSCardReleaseStartedEvent = NULL;
 
 
 //SCardEstablishContext
@@ -152,6 +155,32 @@ pHookSCardTransmit(
 }
 
 
+//SCardAccessStartedEvent
+WINSCARDAPI HANDLE WINAPI
+pHookSCardAccessStartedEvent(
+	void
+)
+{
+	if (logger) {
+		logger->TraceInfo("SCardAccessStartedEvent");
+	}
+	return pOrigSCardAccessStartedEvent();
+}
+
+
+//SCardReleaseStartedEvent
+WINSCARDAPI void WINAPI
+pHookSCardReleaseStartedEvent(
+	void
+)
+{
+	if (logger) {
+		logger->TraceInfo("SCardReleaseStartedEvent");
+	}
+	pOrigSCardReleaseStartedEvent();
+}
+
+
 //shouldHook
 bool shouldHook() {
 	wchar_t	wProcessName[MAX_PATH];
@@ -171,7 +200,7 @@ bool shouldHook() {
 //hookInitialize
 void hookInitialize() {
 	if (shouldHook()) {
-		g_hDll = LoadLibrary(DLL_HOOKED);
+		g_hDll = LoadLibrary(DLL_HOOKED_W);
 
 		//GetProcAddress
 		 pOrigSCardEstablishContext = (PFN_SCARDESTABLISHCONTEXT)GetProcAddress(g_hDll, "SCardEstablishContext");
@@ -182,6 +211,8 @@ void hookInitialize() {
 		 pOrigSCardBeginTransaction = (PFN_SCARDBEGINTRANSACTION)GetProcAddress(g_hDll, "SCardBeginTransaction");
 		   pOrigSCardEndTransaction = (PFN_SCARDENDTRANSACTION)GetProcAddress(g_hDll, "SCardEndTransaction");
 		         pOrigSCardTransmit = (PFN_SCARDTRANSMIT)GetProcAddress(g_hDll, "SCardTransmit");
+	   pOrigSCardAccessStartedEvent = (PFN_SCARDACCESSSTARTEDEVENT)GetProcAddress(g_hDll, "SCardAccessStartedEvent");
+	  pOrigSCardReleaseStartedEvent = (PFN_SCARDRELEASESTARTEDEVENT)GetProcAddress(g_hDll, "SCardReleaseStartedEvent");
 
 		//Mhook_SetHook
 		Mhook_SetHook((PVOID*)&pOrigSCardEstablishContext, pHookSCardEstablishContext);
@@ -192,6 +223,8 @@ void hookInitialize() {
 		Mhook_SetHook((PVOID*)&pOrigSCardBeginTransaction, pHookSCardBeginTransaction);
 		Mhook_SetHook((PVOID*)&pOrigSCardEndTransaction, pHookSCardEndTransaction);
 		Mhook_SetHook((PVOID*)&pOrigSCardTransmit, pHookSCardTransmit);
+		Mhook_SetHook((PVOID*)&pOrigSCardAccessStartedEvent, pHookSCardAccessStartedEvent);
+		Mhook_SetHook((PVOID*)&pOrigSCardReleaseStartedEvent, pHookSCardReleaseStartedEvent);
 	}
 }
 
@@ -208,6 +241,8 @@ void hookFinalize() {
 		Mhook_Unhook((PVOID*)&pOrigSCardBeginTransaction);
 		Mhook_Unhook((PVOID*)&pOrigSCardEndTransaction);
 		Mhook_Unhook((PVOID*)&pOrigSCardTransmit);
+		Mhook_Unhook((PVOID*)&pOrigSCardAccessStartedEvent);
+		Mhook_Unhook((PVOID*)&pOrigSCardReleaseStartedEvent);
 	}
 }
 
