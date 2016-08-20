@@ -9,32 +9,35 @@
 // Global Variables
 #define				LOG_PATH		"C:\\Logs\\"
 #define				APP_HOOKING		L"C:\\Windows\\system32\\LogonUI.exe"
-#define				DLL_HOOKED		L"WinSCard.dll"
+#define				DLL_HOOKED		TEXT("WinSCard.dll")
 LOGGER::CLogger*	logger = NULL;
 HMODULE				g_hDll = 0;
 
 
 //typedef of WinSCard API function pointers
-typedef LONG(WINAPI *PFN_SCARDESTABLISHCONTEXT)(_In_ DWORD, _Reserved_ LPCVOID, _Reserved_ LPCVOID, _Out_ LPSCARDCONTEXT);
-typedef LONG(WINAPI *PFN_SCARDRELEASECONTEXT)(_In_ SCARDCONTEXT);
-typedef LONG(WINAPI *PFN_SCARDISVALIDCONTEXT)(_In_ SCARDCONTEXT);
-typedef LONG(WINAPI *PFN_SCARDFREEMEMORY)(_In_ SCARDCONTEXT, _In_ LPCVOID);
-typedef LONG(WINAPI *PFN_SCARDDISCONNECT)(_In_ SCARDHANDLE, _In_ DWORD);
-//typedef LONG(WINAPI *PFN_SCARDCANCELTRANSACTION)(_In_ SCARDHANDLE);//CANNOT hook - hung up
-typedef LONG(WINAPI *PFN_SCARDBEGINTRANSACTION)(_In_ SCARDHANDLE);
-typedef LONG(WINAPI *PFN_SCARDENDTRANSACTION)(_In_ SCARDHANDLE, _In_ DWORD);
-typedef LONG(WINAPI *PFN_SCARDTRANSMIT)(_In_ SCARDHANDLE, _In_ LPCSCARD_IO_REQUEST, _In_reads_bytes_(cbSendLength) LPCBYTE, _In_ DWORD, _Inout_opt_ LPSCARD_IO_REQUEST, _Out_writes_bytes_(*pcbRecvLength) LPBYTE, _Inout_ LPDWORD);
+typedef LONG	(WINAPI *PFN_SCARDESTABLISHCONTEXT)(_In_ DWORD, _Reserved_ LPCVOID, _Reserved_ LPCVOID, _Out_ LPSCARDCONTEXT);
+typedef LONG	(WINAPI *PFN_SCARDRELEASECONTEXT)(_In_ SCARDCONTEXT);
+typedef LONG	(WINAPI *PFN_SCARDISVALIDCONTEXT)(_In_ SCARDCONTEXT);
+typedef LONG	(WINAPI *PFN_SCARDFREEMEMORY)(_In_ SCARDCONTEXT, _In_ LPCVOID);
+typedef LONG	(WINAPI *PFN_SCARDDISCONNECT)(_In_ SCARDHANDLE, _In_ DWORD);
+typedef LONG	(WINAPI *PFN_SCARDBEGINTRANSACTION)(_In_ SCARDHANDLE);
+typedef LONG	(WINAPI *PFN_SCARDENDTRANSACTION)(_In_ SCARDHANDLE, _In_ DWORD);
+typedef LONG	(WINAPI *PFN_SCARDTRANSMIT)(_In_ SCARDHANDLE, _In_ LPCSCARD_IO_REQUEST, _In_reads_bytes_(cbSendLength) LPCBYTE, _In_ DWORD, _Inout_opt_ LPSCARD_IO_REQUEST, _Out_writes_bytes_(*pcbRecvLength) LPBYTE, _Inout_ LPDWORD);
+
+//typedef LONG		(WINAPI *PFN_SCARDCANCELTRANSACTION)(_In_ SCARDHANDLE);//CANNOT hook - cause RDP crash
+//typedef HANDLE	(WINAPI *PFN_SCARDACCESSSTARTEDEVENT)(void);//CANNOT hook - cause RDP crash
+//typedef void		(WINAPI *PFN_SCARDRELEASESTARTEDEVENT)(void);//CANNOT hook - cause RDP crash
 
 
 //initialization of WinSCard API function pointers
-PFN_SCARDESTABLISHCONTEXT	pOrigSCardEstablishContext = NULL;
-PFN_SCARDRELEASECONTEXT		pOrigSCardReleaseContext = NULL;
-PFN_SCARDISVALIDCONTEXT		pOrigSCardIsValidContext = NULL;
-PFN_SCARDFREEMEMORY			pOrigSCardFreeMemory = NULL;
-PFN_SCARDDISCONNECT			pOrigSCardDisconnect = NULL;
-PFN_SCARDBEGINTRANSACTION	pOrigSCardBeginTransaction = NULL;
-PFN_SCARDENDTRANSACTION		pOrigSCardEndTransaction = NULL;
-PFN_SCARDTRANSMIT			pOrigSCardTransmit = NULL;
+PFN_SCARDESTABLISHCONTEXT		pOrigSCardEstablishContext = NULL;
+PFN_SCARDRELEASECONTEXT			pOrigSCardReleaseContext = NULL;
+PFN_SCARDISVALIDCONTEXT			pOrigSCardIsValidContext = NULL;
+PFN_SCARDFREEMEMORY				pOrigSCardFreeMemory = NULL;
+PFN_SCARDDISCONNECT				pOrigSCardDisconnect = NULL;
+PFN_SCARDBEGINTRANSACTION		pOrigSCardBeginTransaction = NULL;
+PFN_SCARDENDTRANSACTION			pOrigSCardEndTransaction = NULL;
+PFN_SCARDTRANSMIT				pOrigSCardTransmit = NULL;
 
 
 //SCardEstablishContext
@@ -153,10 +156,10 @@ pHookSCardTransmit(
 bool shouldHook() {
 	wchar_t	wProcessName[MAX_PATH];
 	GetModuleFileName(NULL, wProcessName, MAX_PATH);
-	std::wstring ws(wProcessName);//convert wchar* to wstring
-	std::string strProcessName(ws.begin(), ws.end());
+	std::wstring wsPN(wProcessName);//convert wchar* to wstring
+	std::string strProcessName(wsPN.begin(), wsPN.end());
 	if (0 == wcscmp(APP_HOOKING, wProcessName)) {
-		if (logger) { logger->TraceInfo("%s is hooking onto %s", strProcessName.c_str(), DLL_HOOKED); }
+		if (logger) { logger->TraceInfo("%s is hooking onto a %s", strProcessName.c_str(), DLL_HOOKED); }
 		return true;
 	} else {
 		if (logger) { logger->TraceInfo("%s is NOT hooking onto anything", strProcessName.c_str()); }

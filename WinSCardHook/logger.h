@@ -11,14 +11,14 @@ namespace LOGGER
 	static const std::string strWarningPrefix = "WARN\t";
 	static const std::string strInfoPrefix = "INFO\t";
 
-	typedef enum EnumLogLevel
+	typedef enum _EnumLogLevel
 	{
 		LogLevel_Stop = 0,
 		LogLevel_Fatal,
 		LogLevel_Error,
 		LogLevel_Warning,
 		LogLevel_Info
-	};
+	} EnumLogLevel;
 
 	class CriticalSection
 	{
