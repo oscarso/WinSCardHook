@@ -30,6 +30,7 @@ typedef LONG	(WINAPI *PFN_SCARDCANCEL)(_In_ SCARDCONTEXT);
 typedef LONG	(WINAPI *PFN_SCARDRECONNECT)(_In_ SCARDHANDLE, _In_ DWORD, _In_ DWORD, _In_ DWORD, _Out_opt_ LPDWORD);
 typedef LONG	(WINAPI *PFN_SCARDGETATTRIB)(_In_ SCARDHANDLE, _In_ DWORD, _Out_writes_bytes_opt_(*pcbAttrLen) LPBYTE, _Inout_ LPDWORD);
 typedef LONG	(WINAPI *PFN_SCARDSETATTRIB)(_In_ SCARDHANDLE, _In_ DWORD, _In_reads_bytes_(cbAttrLen) LPCBYTE, _In_ DWORD);
+typedef LONG	(WINAPI *PFN_SCARDCONTROL)(_In_ SCARDHANDLE, _In_ DWORD, _In_reads_bytes_(cbInBufferSize) LPCVOID, _In_ DWORD, _Out_writes_bytes_(cbOutBufferSize) LPVOID, _In_ DWORD, _Out_ LPDWORD);
 
 #if (NTDDI_VERSION >= NTDDI_VISTA)
 typedef LONG	(WINAPI *PFN_SCARDGETTRANSMITCOUNT)(_In_ SCARDHANDLE, _Out_ LPDWORD);
@@ -46,20 +47,6 @@ SCardControl(
 	_Out_writes_bytes_(cbOutBufferSize) LPVOID lpOutBuffer,
 	_In_    DWORD cbOutBufferSize,
 	_Out_   LPDWORD lpBytesReturned);
-
-extern WINSCARDAPI LONG WINAPI
-SCardGetAttrib(
-	_In_    SCARDHANDLE hCard,
-	_In_    DWORD dwAttrId,
-	_Out_writes_bytes_opt_(*pcbAttrLen) LPBYTE pbAttr,
-	_Inout_ LPDWORD pcbAttrLen);
-
-extern WINSCARDAPI LONG WINAPI
-SCardSetAttrib(
-	_In_ SCARDHANDLE hCard,
-	_In_ DWORD dwAttrId,
-	_In_reads_bytes_(cbAttrLen) LPCBYTE pbAttr,
-	_In_ DWORD cbAttrLen);
 #endif
 
 
@@ -81,6 +68,7 @@ PFN_SCARDCANCEL					pOrigSCardCancel = NULL;
 PFN_SCARDRECONNECT				pOrigSCardReconnect = NULL;
 PFN_SCARDGETATTRIB				pOrigSCardGetAttrib = NULL;
 PFN_SCARDSETATTRIB				pOrigSCardSetAttrib = NULL;
+PFN_SCARDCONTROL				pOrigSCardControl = NULL;
 #if (NTDDI_VERSION >= NTDDI_VISTA)
 PFN_SCARDGETTRANSMITCOUNT		pOrigSCardGetTransmitCount = NULL;
 #endif // (NTDDI_VERSION >= NTDDI_VISTA)
@@ -285,6 +273,25 @@ pHookSCardSetAttrib(
 }
 
 
+//SCardControl
+WINSCARDAPI LONG WINAPI
+pHookSCardControl(
+	_In_    SCARDHANDLE hCard,
+	_In_    DWORD dwControlCode,
+	_In_reads_bytes_(cbInBufferSize) LPCVOID lpInBuffer,
+	_In_    DWORD cbInBufferSize,
+	_Out_writes_bytes_(cbOutBufferSize) LPVOID lpOutBuffer,
+	_In_    DWORD cbOutBufferSize,
+	_Out_   LPDWORD lpBytesReturned
+)
+{
+	if (logger) {
+		logger->TraceInfo("SCardControl");
+	}
+	return pOrigSCardControl(hCard, dwControlCode, lpInBuffer, cbInBufferSize, lpOutBuffer, cbOutBufferSize, lpBytesReturned);
+}
+
+
 //SCardGetTransmitCount
 #if (NTDDI_VERSION >= NTDDI_VISTA)
 WINSCARDAPI LONG WINAPI
@@ -343,6 +350,7 @@ void hookInitialize() {
 				pOrigSCardReconnect = (PFN_SCARDRECONNECT)GetProcAddress(g_hDll, "SCardReconnect");
 				pOrigSCardGetAttrib = (PFN_SCARDGETATTRIB)GetProcAddress(g_hDll, "SCardGetAttrib");
 				pOrigSCardSetAttrib = (PFN_SCARDSETATTRIB)GetProcAddress(g_hDll, "SCardSetAttrib");
+				  pOrigSCardControl = (PFN_SCARDCONTROL)GetProcAddress(g_hDll, "SCardControl");
 
 		//Mhook_SetHook
 		Mhook_SetHook((PVOID*)&pOrigSCardEstablishContext, pHookSCardEstablishContext);
@@ -359,6 +367,7 @@ void hookInitialize() {
 		Mhook_SetHook((PVOID*)&pOrigSCardReconnect, pHookSCardReconnect);
 		Mhook_SetHook((PVOID*)&pOrigSCardGetAttrib, pHookSCardGetAttrib);
 		Mhook_SetHook((PVOID*)&pOrigSCardSetAttrib, pHookSCardSetAttrib);
+		Mhook_SetHook((PVOID*)&pOrigSCardControl, pHookSCardControl);
 
 #if (NTDDI_VERSION >= NTDDI_VISTA)
 		pOrigSCardGetTransmitCount = (PFN_SCARDGETTRANSMITCOUNT)GetProcAddress(g_hDll, "SCardGetTransmitCount");
@@ -386,6 +395,7 @@ void hookFinalize() {
 		Mhook_Unhook((PVOID*)&pOrigSCardReconnect);
 		Mhook_Unhook((PVOID*)&pOrigSCardGetAttrib);
 		Mhook_Unhook((PVOID*)&pOrigSCardSetAttrib);
+		Mhook_Unhook((PVOID*)&pOrigSCardControl);
 
 #if (NTDDI_VERSION >= NTDDI_VISTA)
 		Mhook_Unhook((PVOID*)&pOrigSCardGetTransmitCount);
