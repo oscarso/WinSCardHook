@@ -36,20 +36,6 @@ typedef LONG	(WINAPI *PFN_SCARDCONTROL)(_In_ SCARDHANDLE, _In_ DWORD, _In_reads_
 typedef LONG	(WINAPI *PFN_SCARDGETTRANSMITCOUNT)(_In_ SCARDHANDLE, _Out_ LPDWORD);
 #endif // (NTDDI_VERSION >= NTDDI_VISTA)
 
-
-#if 0
-extern WINSCARDAPI LONG WINAPI
-SCardControl(
-	_In_    SCARDHANDLE hCard,
-	_In_    DWORD dwControlCode,
-	_In_reads_bytes_(cbInBufferSize) LPCVOID lpInBuffer,
-	_In_    DWORD cbInBufferSize,
-	_Out_writes_bytes_(cbOutBufferSize) LPVOID lpOutBuffer,
-	_In_    DWORD cbOutBufferSize,
-	_Out_   LPDWORD lpBytesReturned);
-#endif
-
-
 //typedef LONG	(WINAPI *PFN_SCARDCANCELTRANSACTION)(_In_ SCARDHANDLE);//CANNOT hook - cause RDP crash
 
 
