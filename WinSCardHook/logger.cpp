@@ -95,7 +95,7 @@ namespace LOGGER
 	}
 
 
-	const char* CLogger::buf_spec(void* buf_addr, long buf_len)
+	const char* CLogger::buf_spec(const void* buf_addr, const long buf_len)
 	{
 		static char ret[64];
 		if (4 == sizeof(void *))
@@ -106,21 +106,21 @@ namespace LOGGER
 	}
 
 
-	void CLogger::PrintBuffer(void* value, long size)
+	void CLogger::PrintBuffer(const void* value, const long size)
 	{
 		if ((size <= 0) || (NULL == value))
 			return;
 
 		string strResult;
 		int i;
-		char hex[16 * 3 + 1], ascii[16 + 1];
+		char hex[256], ascii[256];
 		char *hex_ptr = hex, *ascii_ptr = ascii;
 		int offset = 0;
 
 		memset(hex, ' ', sizeof(hex));
 		memset(ascii, ' ', sizeof(ascii));
 		ascii[sizeof ascii - 1] = 0;
-		strResult.append(buf_spec(value, size));
+		strResult.append(buf_spec((void *)value, size));
 		TraceEx("%s", strResult.c_str());
 		for (i = 0; i < size; i++) {
 			char val;

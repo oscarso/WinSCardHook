@@ -55,7 +55,7 @@ namespace LOGGER
 		void TraceInfo(const char *lpcszFormat, ...);
 		void TraceInfoEx(const std::string msg = "");
 		void ChangeLogLevel(EnumLogLevel nLevel);
-		void PrintBuffer(void* value, long size);
+		void PrintBuffer(const void* value, const long size);
 	private:
 		CLogger(const EnumLogLevel nLogLevel = EnumLogLevel::LogLevel_Info,
 				const std::string strLogPath = "",
@@ -65,7 +65,7 @@ namespace LOGGER
 		std::string GetAppPathA();
 		std::string FormatString(const char *lpcszFormat, ...);
 		const char* path_file(const char *path, char splitter);
-		const char* buf_spec(void* buf_addr, long buf_len);
+		const char* buf_spec(const void* buf_addr, const long buf_len);
 	private:
 		static CLogger*			m_Instance;
 		static CriticalSection	m_csInstance;

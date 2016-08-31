@@ -168,13 +168,21 @@ pHookSCardTransmit(
 	LONG ret = 0;
 	if (logger) {
 		logger->TraceInfo("SCardTransmit");
-		logger->TraceInfo("pioSendPci->dwProtocol: 0x%x		pioSendPci->cbPciLength: 0x%x", pioSendPci->dwProtocol, pioSendPci->cbPciLength);
+		if (pioSendPci) {
+			logger->TraceInfo("pioSendPci: 0x%p", (void *)&pioSendPci);
+			logger->TraceInfo("pioSendPci->dwProtocol: 0x%x		pioSendPci->cbPciLength: 0x%x", pioSendPci->dwProtocol, pioSendPci->cbPciLength);
+		}
 		logger->TraceInfo("pbSendBuffer:");
 		logger->PrintBuffer((void *)pbSendBuffer, cbSendLength);
+
 		ret = pOrigSCardTransmit(hCard, pioSendPci, pbSendBuffer, cbSendLength, pioRecvPci, pbRecvBuffer, pcbRecvLength);
-		//logger->TraceInfo("pioRecvPci->dwProtocol: 0x%x		pioRecvPci->cbPciLength: 0x%x", pioRecvPci->dwProtocol, pioRecvPci->cbPciLength);
+
+		if (pioRecvPci) {
+			logger->TraceInfo("pioRecvPci: 0x%p", (void *)&pioRecvPci);
+			logger->TraceInfo("pioRecvPci->dwProtocol: 0x%x		pioRecvPci->cbPciLength: 0x%x", pioRecvPci->dwProtocol, pioRecvPci->cbPciLength);
+		}
 		logger->TraceInfo("pbRecvBuffer:");
-		logger->PrintBuffer((void *)pbRecvBuffer, 8);
+		logger->PrintBuffer((void *)pbRecvBuffer, *pcbRecvLength);
 	}
 	return ret;
 }
