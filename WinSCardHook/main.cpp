@@ -165,10 +165,18 @@ pHookSCardTransmit(
 	_Out_writes_bytes_(*pcbRecvLength) LPBYTE pbRecvBuffer,
 	_Inout_     LPDWORD pcbRecvLength)
 {
+	LONG ret = 0;
 	if (logger) {
 		logger->TraceInfo("SCardTransmit");
+		logger->TraceInfo("pioSendPci->dwProtocol: 0x%x		pioSendPci->cbPciLength: 0x%x", pioSendPci->dwProtocol, pioSendPci->cbPciLength);
+		logger->TraceInfo("pbSendBuffer:");
+		logger->PrintBuffer((void *)pbSendBuffer, cbSendLength);
+		ret = pOrigSCardTransmit(hCard, pioSendPci, pbSendBuffer, cbSendLength, pioRecvPci, pbRecvBuffer, pcbRecvLength);
+		//logger->TraceInfo("pioRecvPci->dwProtocol: 0x%x		pioRecvPci->cbPciLength: 0x%x", pioRecvPci->dwProtocol, pioRecvPci->cbPciLength);
+		logger->TraceInfo("pbRecvBuffer:");
+		logger->PrintBuffer((void *)pbRecvBuffer, 8);
 	}
-	return pOrigSCardTransmit(hCard, pioSendPci, pbSendBuffer, cbSendLength, pioRecvPci, pbRecvBuffer, pcbRecvLength);
+	return ret;
 }
 
 

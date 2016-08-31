@@ -95,9 +95,105 @@ namespace LOGGER
 	}
 
 
+	const char* CLogger::buf_spec(void* buf_addr, long buf_len)
+	{
+		static char ret[64];
+		if (4 == sizeof(void *))
+			sprintf_s(ret, "%08lx / %ld", (unsigned long)buf_addr, (long)buf_len);
+		else
+			sprintf_s(ret, "%016lx / %ld", (unsigned long)buf_addr, (long)buf_len);
+		return ret;
+	}
+
+
+	void CLogger::PrintBuffer(void* value, long size)
+	{
+		if ((size <= 0) || (NULL == value))
+			return;
+
+		string strResult;
+		int i;
+		char hex[16 * 3 + 1], ascii[16 + 1];
+		char *hex_ptr = hex, *ascii_ptr = ascii;
+		int offset = 0;
+
+		memset(hex, ' ', sizeof(hex));
+		memset(ascii, ' ', sizeof(ascii));
+		ascii[sizeof ascii - 1] = 0;
+		strResult.append(buf_spec(value, size));
+		TraceEx("%s", strResult.c_str());
+		for (i = 0; i < size; i++) {
+			char val;
+			if (i && (i % 16) == 0) {
+				strResult.clear();
+				TraceEx("\n    %08X  %s %s", offset, hex, ascii);
+				offset += 16;
+				hex_ptr = hex;
+				ascii_ptr = ascii;
+				memset(ascii, ' ', sizeof ascii - 1);
+			}
+			val = ((char *)value)[i];
+			/* hex */
+			sprintf(hex_ptr, "%02X ", val);
+			hex_ptr += 3;
+			/* ascii */
+			if (val > 31 && val < 128)
+				*ascii_ptr = val;
+			else
+				*ascii_ptr = '.';
+			ascii_ptr++;
+		}
+
+		/* padd */
+		while (strlen(hex) < 3 * 16)
+			strcat_s(hex, "   ");
+		TraceEx("\n    %08X  %s %s", offset, hex, ascii);
+		TraceEx("\n");
+	}
+
+
 	void CLogger::TraceInfoEx(const string msg)
 	{
 		TraceInfo(msg.c_str());
+	}
+
+
+	void CLogger::TraceEx(const char *lpcszFormat, ...)
+	{
+		if (EnumLogLevel::LogLevel_Info > m_nLogLevel)
+			return;
+		string strResult;
+		if (NULL != lpcszFormat) {
+			va_list marker = NULL;
+			va_start(marker, lpcszFormat);
+			size_t nLength = _vscprintf(lpcszFormat, marker) + 1;
+			std::vector<char> vBuffer(nLength, '\0');
+			int nWritten = _vsnprintf_s(&vBuffer[0], vBuffer.size(), nLength, lpcszFormat, marker);
+			if (nWritten > 0) {
+				strResult = &vBuffer[0];
+			}
+			va_end(marker);
+		}
+		if (strResult.empty()) {
+			return;
+		}
+
+		try {
+			if (NULL == m_pFileStream) {
+				m_csInstance.Lock();
+				fopen_s(&m_pFileStream, m_strLogFilePath.c_str(), "a+");
+				if (NULL == m_pFileStream) {
+					m_csInstance.Unlock();
+					return;
+				}
+			}
+			fprintf(m_pFileStream, "%s", strResult.c_str());
+			fflush(m_pFileStream);
+			m_csInstance.Unlock();
+		}
+		catch (...) {
+			m_csInstance.Unlock();
+		}
 	}
 
 
