@@ -123,7 +123,7 @@ namespace LOGGER
 		strResult.append(buf_spec((void *)value, size));
 		TraceEx("%s", strResult.c_str());
 		for (i = 0; i < size; i++) {
-			char val;
+			unsigned char val;
 			if (i && (i % 16) == 0) {
 				strResult.clear();
 				TraceEx("\n    %08X  %s %s", offset, hex, ascii);
@@ -132,7 +132,7 @@ namespace LOGGER
 				ascii_ptr = ascii;
 				memset(ascii, ' ', sizeof ascii - 1);
 			}
-			val = ((char *)value)[i];
+			val = ((unsigned char *)value)[i];
 			/* hex */
 			sprintf(hex_ptr, "%02X ", val);
 			hex_ptr += 3;
