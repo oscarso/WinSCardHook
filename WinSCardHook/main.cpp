@@ -16,47 +16,47 @@ HMODULE				g_hDll = 0;
 
 
 //typedef of WinSCard API function pointers
-typedef LONG	(WINAPI *PFN_SCARDESTABLISHCONTEXT)(_In_ DWORD, _Reserved_ LPCVOID, _Reserved_ LPCVOID, _Out_ LPSCARDCONTEXT);
-typedef LONG	(WINAPI *PFN_SCARDRELEASECONTEXT)(_In_ SCARDCONTEXT);
-typedef LONG	(WINAPI *PFN_SCARDISVALIDCONTEXT)(_In_ SCARDCONTEXT);
-typedef LONG	(WINAPI *PFN_SCARDFREEMEMORY)(_In_ SCARDCONTEXT, _In_ LPCVOID);
-typedef LONG	(WINAPI *PFN_SCARDDISCONNECT)(_In_ SCARDHANDLE, _In_ DWORD);
-typedef LONG	(WINAPI *PFN_SCARDBEGINTRANSACTION)(_In_ SCARDHANDLE);
-typedef LONG	(WINAPI *PFN_SCARDENDTRANSACTION)(_In_ SCARDHANDLE, _In_ DWORD);
-typedef LONG	(WINAPI *PFN_SCARDTRANSMIT)(_In_ SCARDHANDLE, _In_ LPCSCARD_IO_REQUEST, _In_reads_bytes_(cbSendLength) LPCBYTE, _In_ DWORD, _Inout_opt_ LPSCARD_IO_REQUEST, _Out_writes_bytes_(*pcbRecvLength) LPBYTE, _Inout_ LPDWORD);
-typedef HANDLE	(WINAPI *PFN_SCARDACCESSSTARTEDEVENT)(void);
-typedef void	(WINAPI *PFN_SCARDRELEASESTARTEDEVENT)(void);
-typedef LONG	(WINAPI *PFN_SCARDCANCEL)(_In_ SCARDCONTEXT);
-typedef LONG	(WINAPI *PFN_SCARDRECONNECT)(_In_ SCARDHANDLE, _In_ DWORD, _In_ DWORD, _In_ DWORD, _Out_opt_ LPDWORD);
-typedef LONG	(WINAPI *PFN_SCARDGETATTRIB)(_In_ SCARDHANDLE, _In_ DWORD, _Out_writes_bytes_opt_(*pcbAttrLen) LPBYTE, _Inout_ LPDWORD);
-typedef LONG	(WINAPI *PFN_SCARDSETATTRIB)(_In_ SCARDHANDLE, _In_ DWORD, _In_reads_bytes_(cbAttrLen) LPCBYTE, _In_ DWORD);
-typedef LONG	(WINAPI *PFN_SCARDCONTROL)(_In_ SCARDHANDLE, _In_ DWORD, _In_reads_bytes_(cbInBufferSize) LPCVOID, _In_ DWORD, _Out_writes_bytes_(cbOutBufferSize) LPVOID, _In_ DWORD, _Out_ LPDWORD);
+typedef LONG	(WINAPI *PFN_SCARD_ESTABLISH_CONTEXT)(_In_ DWORD, _Reserved_ LPCVOID, _Reserved_ LPCVOID, _Out_ LPSCARDCONTEXT);
+typedef LONG	(WINAPI *PFN_SCARD_RELEASE_CONTEXT)(_In_ SCARDCONTEXT);
+typedef LONG	(WINAPI *PFN_SCARD_IS_VALID_CONTEXT)(_In_ SCARDCONTEXT);
+typedef LONG	(WINAPI *PFN_SCARD_FREE_MEMORY)(_In_ SCARDCONTEXT, _In_ LPCVOID);
+typedef LONG	(WINAPI *PFN_SCARD_DISCONNECT)(_In_ SCARDHANDLE, _In_ DWORD);
+typedef LONG	(WINAPI *PFN_SCARD_BEGIN_TRANSACTION)(_In_ SCARDHANDLE);
+typedef LONG	(WINAPI *PFN_SCARD_END_TRANSACTION)(_In_ SCARDHANDLE, _In_ DWORD);
+typedef LONG	(WINAPI *PFN_SCARD_TRANSMIT)(_In_ SCARDHANDLE, _In_ LPCSCARD_IO_REQUEST, _In_reads_bytes_(cbSendLength) LPCBYTE, _In_ DWORD, _Inout_opt_ LPSCARD_IO_REQUEST, _Out_writes_bytes_(*pcbRecvLength) LPBYTE, _Inout_ LPDWORD);
+typedef HANDLE	(WINAPI *PFN_SCARD_ACCESS_STARTED_EVENT)(void);
+typedef void	(WINAPI *PFN_SCARD_RELEASE_STARTED_EVENT)(void);
+typedef LONG	(WINAPI *PFN_SCARD_CANCEL)(_In_ SCARDCONTEXT);
+typedef LONG	(WINAPI *PFN_SCARD_RECONNECT)(_In_ SCARDHANDLE, _In_ DWORD, _In_ DWORD, _In_ DWORD, _Out_opt_ LPDWORD);
+typedef LONG	(WINAPI *PFN_SCARD_GET_ATTRIB)(_In_ SCARDHANDLE, _In_ DWORD, _Out_writes_bytes_opt_(*pcbAttrLen) LPBYTE, _Inout_ LPDWORD);
+typedef LONG	(WINAPI *PFN_SCARD_SET_ATTRIB)(_In_ SCARDHANDLE, _In_ DWORD, _In_reads_bytes_(cbAttrLen) LPCBYTE, _In_ DWORD);
+typedef LONG	(WINAPI *PFN_SCARD_CONTROL)(_In_ SCARDHANDLE, _In_ DWORD, _In_reads_bytes_(cbInBufferSize) LPCVOID, _In_ DWORD, _Out_writes_bytes_(cbOutBufferSize) LPVOID, _In_ DWORD, _Out_ LPDWORD);
 
 #if (NTDDI_VERSION >= NTDDI_VISTA)
-typedef LONG	(WINAPI *PFN_SCARDGETTRANSMITCOUNT)(_In_ SCARDHANDLE, _Out_ LPDWORD);
+typedef LONG	(WINAPI *PFN_SCARD_GET_TRANSMIT_COUNT)(_In_ SCARDHANDLE, _Out_ LPDWORD);
 #endif // (NTDDI_VERSION >= NTDDI_VISTA)
 
-//typedef LONG	(WINAPI *PFN_SCARDCANCELTRANSACTION)(_In_ SCARDHANDLE);//CANNOT hook - cause RDP crash
+//typedef LONG	(WINAPI *PFN_SCARD_CANCEL_TRANSACTION)(_In_ SCARDHANDLE);//CANNOT hook - cause RDP crash
 
 
 //initialization of WinSCard API function pointers
-PFN_SCARDESTABLISHCONTEXT		pOrigSCardEstablishContext = NULL;
-PFN_SCARDRELEASECONTEXT			pOrigSCardReleaseContext = NULL;
-PFN_SCARDISVALIDCONTEXT			pOrigSCardIsValidContext = NULL;
-PFN_SCARDFREEMEMORY				pOrigSCardFreeMemory = NULL;
-PFN_SCARDDISCONNECT				pOrigSCardDisconnect = NULL;
-PFN_SCARDBEGINTRANSACTION		pOrigSCardBeginTransaction = NULL;
-PFN_SCARDENDTRANSACTION			pOrigSCardEndTransaction = NULL;
-PFN_SCARDTRANSMIT				pOrigSCardTransmit = NULL;
-PFN_SCARDACCESSSTARTEDEVENT		pOrigSCardAccessStartedEvent = NULL;
-PFN_SCARDRELEASESTARTEDEVENT	pOrigSCardReleaseStartedEvent = NULL;
-PFN_SCARDCANCEL					pOrigSCardCancel = NULL;
-PFN_SCARDRECONNECT				pOrigSCardReconnect = NULL;
-PFN_SCARDGETATTRIB				pOrigSCardGetAttrib = NULL;
-PFN_SCARDSETATTRIB				pOrigSCardSetAttrib = NULL;
-PFN_SCARDCONTROL				pOrigSCardControl = NULL;
+PFN_SCARD_ESTABLISH_CONTEXT			pOrigSCardEstablishContext = NULL;
+PFN_SCARD_RELEASE_CONTEXT			pOrigSCardReleaseContext = NULL;
+PFN_SCARD_IS_VALID_CONTEXT			pOrigSCardIsValidContext = NULL;
+PFN_SCARD_FREE_MEMORY				pOrigSCardFreeMemory = NULL;
+PFN_SCARD_DISCONNECT				pOrigSCardDisconnect = NULL;
+PFN_SCARD_BEGIN_TRANSACTION			pOrigSCardBeginTransaction = NULL;
+PFN_SCARD_END_TRANSACTION			pOrigSCardEndTransaction = NULL;
+PFN_SCARD_TRANSMIT					pOrigSCardTransmit = NULL;
+PFN_SCARD_ACCESS_STARTED_EVENT		pOrigSCardAccessStartedEvent = NULL;
+PFN_SCARD_RELEASE_STARTED_EVENT		pOrigSCardReleaseStartedEvent = NULL;
+PFN_SCARD_CANCEL					pOrigSCardCancel = NULL;
+PFN_SCARD_RECONNECT					pOrigSCardReconnect = NULL;
+PFN_SCARD_GET_ATTRIB				pOrigSCardGetAttrib = NULL;
+PFN_SCARD_SET_ATTRIB				pOrigSCardSetAttrib = NULL;
+PFN_SCARD_CONTROL					pOrigSCardControl = NULL;
 #if (NTDDI_VERSION >= NTDDI_VISTA)
-PFN_SCARDGETTRANSMITCOUNT		pOrigSCardGetTransmitCount = NULL;
+PFN_SCARD_GET_TRANSMIT_COUNT		pOrigSCardGetTransmitCount = NULL;
 #endif // (NTDDI_VERSION >= NTDDI_VISTA)
 
 
@@ -338,21 +338,21 @@ void hookInitialize() {
 		g_hDll = LoadLibrary(DLL_HOOKED_W);
 
 		//GetProcAddress
-		 pOrigSCardEstablishContext = (PFN_SCARDESTABLISHCONTEXT)GetProcAddress(g_hDll, "SCardEstablishContext");
-		   pOrigSCardReleaseContext = (PFN_SCARDRELEASECONTEXT)GetProcAddress(g_hDll, "SCardReleaseContext");
-		   pOrigSCardIsValidContext = (PFN_SCARDISVALIDCONTEXT)GetProcAddress(g_hDll, "SCardIsValidContext");
-			   pOrigSCardFreeMemory = (PFN_SCARDFREEMEMORY)GetProcAddress(g_hDll, "SCardFreeMemory");
-			   pOrigSCardDisconnect = (PFN_SCARDDISCONNECT)GetProcAddress(g_hDll, "SCardDisconnect");
-		 pOrigSCardBeginTransaction = (PFN_SCARDBEGINTRANSACTION)GetProcAddress(g_hDll, "SCardBeginTransaction");
-		   pOrigSCardEndTransaction = (PFN_SCARDENDTRANSACTION)GetProcAddress(g_hDll, "SCardEndTransaction");
-		         pOrigSCardTransmit = (PFN_SCARDTRANSMIT)GetProcAddress(g_hDll, "SCardTransmit");
-	   pOrigSCardAccessStartedEvent = (PFN_SCARDACCESSSTARTEDEVENT)GetProcAddress(g_hDll, "SCardAccessStartedEvent");
-	  pOrigSCardReleaseStartedEvent = (PFN_SCARDRELEASESTARTEDEVENT)GetProcAddress(g_hDll, "SCardReleaseStartedEvent");
-				   pOrigSCardCancel = (PFN_SCARDCANCEL)GetProcAddress(g_hDll, "SCardCancel");
-				pOrigSCardReconnect = (PFN_SCARDRECONNECT)GetProcAddress(g_hDll, "SCardReconnect");
-				pOrigSCardGetAttrib = (PFN_SCARDGETATTRIB)GetProcAddress(g_hDll, "SCardGetAttrib");
-				pOrigSCardSetAttrib = (PFN_SCARDSETATTRIB)GetProcAddress(g_hDll, "SCardSetAttrib");
-				  pOrigSCardControl = (PFN_SCARDCONTROL)GetProcAddress(g_hDll, "SCardControl");
+		 pOrigSCardEstablishContext = (PFN_SCARD_ESTABLISH_CONTEXT)GetProcAddress(g_hDll, "SCardEstablishContext");
+		   pOrigSCardReleaseContext = (PFN_SCARD_RELEASE_CONTEXT)GetProcAddress(g_hDll, "SCardReleaseContext");
+		   pOrigSCardIsValidContext = (PFN_SCARD_IS_VALID_CONTEXT)GetProcAddress(g_hDll, "SCardIsValidContext");
+			   pOrigSCardFreeMemory = (PFN_SCARD_FREE_MEMORY)GetProcAddress(g_hDll, "SCardFreeMemory");
+			   pOrigSCardDisconnect = (PFN_SCARD_DISCONNECT)GetProcAddress(g_hDll, "SCardDisconnect");
+		 pOrigSCardBeginTransaction = (PFN_SCARD_BEGIN_TRANSACTION)GetProcAddress(g_hDll, "SCardBeginTransaction");
+		   pOrigSCardEndTransaction = (PFN_SCARD_END_TRANSACTION)GetProcAddress(g_hDll, "SCardEndTransaction");
+		         pOrigSCardTransmit = (PFN_SCARD_TRANSMIT)GetProcAddress(g_hDll, "SCardTransmit");
+	   pOrigSCardAccessStartedEvent = (PFN_SCARD_ACCESS_STARTED_EVENT)GetProcAddress(g_hDll, "SCardAccessStartedEvent");
+	  pOrigSCardReleaseStartedEvent = (PFN_SCARD_RELEASE_STARTED_EVENT)GetProcAddress(g_hDll, "SCardReleaseStartedEvent");
+				   pOrigSCardCancel = (PFN_SCARD_CANCEL)GetProcAddress(g_hDll, "SCardCancel");
+				pOrigSCardReconnect = (PFN_SCARD_RECONNECT)GetProcAddress(g_hDll, "SCardReconnect");
+				pOrigSCardGetAttrib = (PFN_SCARD_GET_ATTRIB)GetProcAddress(g_hDll, "SCardGetAttrib");
+				pOrigSCardSetAttrib = (PFN_SCARD_SET_ATTRIB)GetProcAddress(g_hDll, "SCardSetAttrib");
+				  pOrigSCardControl = (PFN_SCARD_CONTROL)GetProcAddress(g_hDll, "SCardControl");
 
 		//Mhook_SetHook
 		Mhook_SetHook((PVOID*)&pOrigSCardEstablishContext, pHookSCardEstablishContext);
@@ -372,7 +372,7 @@ void hookInitialize() {
 		Mhook_SetHook((PVOID*)&pOrigSCardControl, pHookSCardControl);
 
 #if (NTDDI_VERSION >= NTDDI_VISTA)
-		pOrigSCardGetTransmitCount = (PFN_SCARDGETTRANSMITCOUNT)GetProcAddress(g_hDll, "SCardGetTransmitCount");
+		pOrigSCardGetTransmitCount = (PFN_SCARD_GET_TRANSMIT_COUNT)GetProcAddress(g_hDll, "SCardGetTransmitCount");
 		Mhook_SetHook((PVOID*)&pOrigSCardGetTransmitCount, pHookSCardGetTransmitCount);
 #endif // (NTDDI_VERSION >= NTDDI_VISTA)
 	}
