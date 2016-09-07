@@ -59,22 +59,28 @@ namespace LOGGER
 		DWORD dwProcessID = GetCurrentProcessId();
 
 		//log file name
+		time_t curTime;
+		time(&curTime);
+		tm tm1;
+		localtime_s(&tm1, &curTime);
+		std::string strLogNameFinal = FormatString(
+			"%04d%02d%02d%02d%02d_%04d",
+			tm1.tm_year + 1900,
+			tm1.tm_mon + 1,
+			tm1.tm_mday,
+			tm1.tm_hour,
+			tm1.tm_min,
+			dwProcessID
+		);
 		if (m_strLogName.empty()) {
-			time_t curTime;
-			time(&curTime);
-			tm tm1;
-			localtime_s(&tm1, &curTime);
-			m_strLogName = FormatString(
-							"%04d%02d%02d%02d%02d_%04d.log",
-							tm1.tm_year + 1900,
-							tm1.tm_mon + 1,
-							tm1.tm_mday,
-							tm1.tm_hour,
-							tm1.tm_min,
-							dwProcessID
-							);
+			m_strLogName = getProcessName();
 		}
-		m_strLogFilePath = m_strLogPath.append(m_strLogName);
+		strLogNameFinal = FormatString(
+				"%s_%s.log",
+				strLogNameFinal.c_str(),
+				m_strLogName.c_str()
+		);
+		m_strLogFilePath = m_strLogPath.append(strLogNameFinal);
 		fopen_s(&m_pFileStream, m_strLogFilePath.c_str(), "a+");
 	}
 
@@ -86,6 +92,19 @@ namespace LOGGER
 			fclose(m_pFileStream);
 			m_pFileStream = NULL;
 		}
+	}
+
+
+	//getProcessName
+	std::string CLogger::getProcessName() {
+		wchar_t	wProcessName[MAX_PATH];
+		GetModuleFileName(NULL, wProcessName, MAX_PATH);
+		std::wstring wsPN(wProcessName);//convert wchar* to wstring
+		std::string strProcessNameFullPath(wsPN.begin(), wsPN.end());
+		size_t lastIndexPath = strProcessNameFullPath.find_last_of("\\");
+		size_t lastIndexDot = strProcessNameFullPath.find_last_of(".");
+		std::string strProcessName = strProcessNameFullPath.substr(lastIndexPath + 1, lastIndexDot - lastIndexPath - 1);
+		return strProcessName;
 	}
 
 

@@ -61,6 +61,7 @@ namespace LOGGER
 				const std::string strLogPath = "",
 				const std::string strLogName = "");
 		void Trace(const std::string &strLog);
+		std::string getProcessName();
 		std::string GetTime();
 		std::string GetAppPathA();
 		std::string FormatString(const char *lpcszFormat, ...);
