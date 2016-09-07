@@ -324,7 +324,7 @@ bool shouldHook() {
 	std::string strProcessName(wsPN.begin(), wsPN.end());
 	if (0 == wcscmp(APP_HOOKING, wProcessName)) {
 		logger = LOGGER::CLogger::getInstance(LOGGER::LogLevel_Info, LOG_PATH, "");
-		if (logger) { logger->TraceInfo("%s is hooking onto a %s", strProcessName.c_str(), DLL_HOOKED); }
+		if (logger) { logger->TraceInfo("%s is calling %s", strProcessName.c_str(), DLL_HOOKED); }
 		return true;
 	}
 	return false;
