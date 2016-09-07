@@ -323,10 +323,9 @@ bool shouldHook() {
 	std::wstring wsPN(wProcessName);//convert wchar* to wstring
 	std::string strProcessName(wsPN.begin(), wsPN.end());
 	if (0 == wcscmp(APP_HOOKING, wProcessName)) {
+		logger = LOGGER::CLogger::getInstance(LOGGER::LogLevel_Info, LOG_PATH, "");
 		if (logger) { logger->TraceInfo("%s is hooking onto a %s", strProcessName.c_str(), DLL_HOOKED); }
 		return true;
-	} else {
-		if (logger) { logger->TraceInfo("%s is NOT hooking onto anything", strProcessName.c_str()); }
 	}
 	return false;
 }
@@ -334,7 +333,6 @@ bool shouldHook() {
 
 //hookInitialize
 void hookInitialize() {
-	if (shouldHook()) {
 		g_hDll = LoadLibrary(DLL_HOOKED_W);
 
 		//GetProcAddress
@@ -375,13 +373,11 @@ void hookInitialize() {
 		pOrigSCardGetTransmitCount = (PFN_SCARD_GET_TRANSMIT_COUNT)GetProcAddress(g_hDll, "SCardGetTransmitCount");
 		Mhook_SetHook((PVOID*)&pOrigSCardGetTransmitCount, pHookSCardGetTransmitCount);
 #endif // (NTDDI_VERSION >= NTDDI_VISTA)
-	}
 }
 
 
 //hookFinalize
 void hookFinalize() {
-	if (shouldHook()) {
 		//Mhook_Unhook
 		Mhook_Unhook((PVOID*)&pOrigSCardEstablishContext);
 		Mhook_Unhook((PVOID*)&pOrigSCardReleaseContext);
@@ -402,7 +398,6 @@ void hookFinalize() {
 #if (NTDDI_VERSION >= NTDDI_VISTA)
 		Mhook_Unhook((PVOID*)&pOrigSCardGetTransmitCount);
 #endif // (NTDDI_VERSION >= NTDDI_VISTA)
-	}
 }
 
 
@@ -413,11 +408,13 @@ BOOL WINAPI DllMain(
     __in LPVOID     Reserved
     )
 {
-	logger = LOGGER::CLogger::getInstance(LOGGER::LogLevel_Info, LOG_PATH, "");
-
 	switch (Reason) {
 		case DLL_PROCESS_ATTACH:
-			hookInitialize();
+			if (shouldHook()) {
+				hookInitialize();
+			} else {
+				return FALSE;
+			}
 		break;
 
 		case DLL_PROCESS_DETACH:
