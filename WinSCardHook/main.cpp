@@ -69,11 +69,22 @@ pHookSCardEstablishContext(
 	_Out_		LPSCARDCONTEXT	phContext
 )
 {
+	LONG ret;
 	if (logger) {
-		logger->TraceInfo("SCardEstablishContext");
-		logger->TraceInfo("IN dwScope: %d", dwScope);
+		logger->TraceInfo("--- SCardEstablishContext ---");
+		switch (dwScope) {
+		case SCARD_SCOPE_USER:     logger->TraceInfo("    IN dwScope: SCARD_SCOPE_USER"); break;
+		case SCARD_SCOPE_TERMINAL: logger->TraceInfo("    IN dwScope: SCARD_SCOPE_TERMINAL"); break;
+		case SCARD_SCOPE_SYSTEM:   logger->TraceInfo("    IN dwScope: SCARD_SCOPE_SYSTEM"); break;
+		default:                   logger->TraceInfo("    IN dwScope: undefined");
+		}
 	}
-	return pOrigSCardEstablishContext(dwScope, pvReserved1, pvReserved2, phContext);
+	ret = pOrigSCardEstablishContext(dwScope, pvReserved1, pvReserved2, phContext);
+	if (logger) {
+		logger->TraceInfo("    OUT phContext: %x", *phContext);
+		logger->TraceInfo("    SCardEstablishContext returns: %x", ret);
+	}
+	return ret;
 }
 
 
@@ -83,8 +94,16 @@ pHookSCardReleaseContext(
 	_In_	SCARDCONTEXT	hContext
 )
 {
-	if (logger) { logger->TraceInfo("SCardReleaseContext"); }
-	return pOrigSCardReleaseContext(hContext);
+	LONG ret;
+	if (logger) {
+		logger->TraceInfo("=== SCardReleaseContext ===============");
+		logger->TraceInfo("    IN hContext: %x", hContext);
+	}
+	ret = pOrigSCardReleaseContext(hContext);
+	if (logger) {
+		logger->TraceInfo("    SCardReleaseContext returns: %x", ret);
+	}
+	return ret;
 }
 
 
@@ -94,8 +113,16 @@ pHookSCardIsValidContext(
 	_In_	SCARDCONTEXT	hContext
 )
 {
-	if (logger) { logger->TraceInfo("SCardIsValidContext"); }
-	return pOrigSCardIsValidContext(hContext);
+	LONG ret;
+	if (logger) {
+		logger->TraceInfo("SCardIsValidContext");
+		logger->TraceInfo("    IN hContext: %x", hContext);
+	}
+	ret = pOrigSCardIsValidContext(hContext);
+	if (logger) {
+		logger->TraceInfo("SCardIsValidContext returns: %x", ret);
+	}
+	return ret;
 }
 
 
@@ -107,7 +134,7 @@ pHookSCardFreeMemory(
 )
 {
 	if (logger) {
-		logger->TraceInfo("SCardFreeMemory");
+		logger->TraceInfo("    SCardFreeMemory");
 	}
 	return pOrigSCardFreeMemory(hContext, pvMem);
 }
@@ -121,7 +148,8 @@ pHookSCardDisconnect(
 )
 {
 	if (logger) {
-		logger->TraceInfo("SCardDisconnect");
+		logger->TraceInfo("    SCardDisconnect");
+		logger->TraceInfo("    IN hCard: %x", hCard);
 	}
 	return pOrigSCardDisconnect(hCard, dwDisposition);
 }
@@ -134,7 +162,7 @@ pHookSCardBeginTransaction(
 )
 {
 	if (logger) {
-		logger->TraceInfo("SCardBeginTransaction");
+		logger->TraceInfo("    SCardBeginTransaction");
 	}
 	return pOrigSCardBeginTransaction(hCard);
 }
@@ -148,7 +176,7 @@ pHookSCardEndTransaction(
 )
 {
 	if (logger) {
-		logger->TraceInfo("SCardEndTransaction");
+		logger->TraceInfo("    SCardEndTransaction");
 	}
 	return pOrigSCardEndTransaction(hCard, dwDisposition);
 }
@@ -167,22 +195,23 @@ pHookSCardTransmit(
 {
 	LONG ret = 0;
 	if (logger) {
-		logger->TraceInfo("SCardTransmit");
+		logger->TraceInfo("    SCardTransmit");
 		if (pioSendPci) {
-			logger->TraceInfo("pioSendPci: 0x%p", (void *)&pioSendPci);
-			logger->TraceInfo("pioSendPci->dwProtocol: 0x%x		pioSendPci->cbPciLength: 0x%x", pioSendPci->dwProtocol, pioSendPci->cbPciLength);
+			logger->TraceInfo("    IN pioSendPci: 0x%p", (void *)&pioSendPci);
+			logger->TraceInfo("    IN pioSendPci->dwProtocol: 0x%x		pioSendPci->cbPciLength: 0x%x", pioSendPci->dwProtocol, pioSendPci->cbPciLength);
 		}
-		logger->TraceInfo("pbSendBuffer:");
+		logger->TraceInfo("    IN pbSendBuffer:");
 		logger->PrintBuffer((void *)pbSendBuffer, cbSendLength);
 
 		ret = pOrigSCardTransmit(hCard, pioSendPci, pbSendBuffer, cbSendLength, pioRecvPci, pbRecvBuffer, pcbRecvLength);
 
 		if (pioRecvPci) {
-			logger->TraceInfo("pioRecvPci: 0x%p", (void *)&pioRecvPci);
-			logger->TraceInfo("pioRecvPci->dwProtocol: 0x%x		pioRecvPci->cbPciLength: 0x%x", pioRecvPci->dwProtocol, pioRecvPci->cbPciLength);
+			logger->TraceInfo("    OUT pioRecvPci: 0x%p", (void *)&pioRecvPci);
+			logger->TraceInfo("    OUT pioRecvPci->dwProtocol: 0x%x		pioRecvPci->cbPciLength: 0x%x", pioRecvPci->dwProtocol, pioRecvPci->cbPciLength);
 		}
-		logger->TraceInfo("pbRecvBuffer:");
+		logger->TraceInfo("    OUT pbRecvBuffer:");
 		logger->PrintBuffer((void *)pbRecvBuffer, *pcbRecvLength);
+		logger->TraceInfo("    SCardTransmit returns: %x", ret);
 	}
 	return ret;
 }
@@ -195,7 +224,7 @@ pHookSCardAccessStartedEvent(
 )
 {
 	if (logger) {
-		logger->TraceInfo("SCardAccessStartedEvent");
+		logger->TraceInfo("    SCardAccessStartedEvent");
 	}
 	return pOrigSCardAccessStartedEvent();
 }
@@ -208,7 +237,7 @@ pHookSCardReleaseStartedEvent(
 )
 {
 	if (logger) {
-		logger->TraceInfo("SCardReleaseStartedEvent");
+		logger->TraceInfo("    SCardReleaseStartedEvent");
 	}
 	pOrigSCardReleaseStartedEvent();
 }
@@ -221,7 +250,8 @@ pHookSCardCancel(
 )
 {
 	if (logger) {
-		logger->TraceInfo("SCardCancel");
+		logger->TraceInfo("    SCardCancel");
+		logger->TraceInfo("    IN hContext: %x", hContext);
 	}
 	return pOrigSCardCancel(hContext);
 }
@@ -236,10 +266,19 @@ pHookSCardReconnect(
 	_In_      DWORD dwInitialization,
 	_Out_opt_ LPDWORD pdwActiveProtocol)
 {
+	LONG ret;
 	if (logger) {
-		logger->TraceInfo("SCardReconnect");
+		logger->TraceInfo("    SCardReconnect");
+		logger->TraceInfo("    IN hCard: %x", hCard);
+		logger->TraceInfo("    IN dwShareMode: %x", dwShareMode);
+		logger->TraceInfo("    IN dwPreferredProtocols: %x", dwPreferredProtocols);
+		logger->TraceInfo("    IN dwInitialization: %x", dwInitialization);
 	}
-	return pOrigSCardReconnect(hCard, dwShareMode, dwPreferredProtocols, dwInitialization, pdwActiveProtocol);
+	ret = pOrigSCardReconnect(hCard, dwShareMode, dwPreferredProtocols, dwInitialization, pdwActiveProtocol);
+	if (logger) {
+		logger->TraceInfo("    SCardReconnect returns: %x", ret);
+	}
+	return ret;
 }
 
 
@@ -253,7 +292,7 @@ pHookSCardGetAttrib(
 )
 {
 	if (logger) {
-		logger->TraceInfo("SCardGetAttrib");
+		logger->TraceInfo("    SCardGetAttrib");
 	}
 	return pOrigSCardGetAttrib(hCard, dwAttrId, pbAttr, pcbAttrLen);
 }
@@ -269,7 +308,7 @@ pHookSCardSetAttrib(
 )
 {
 	if (logger) {
-		logger->TraceInfo("SCardSetAttrib");
+		logger->TraceInfo("    SCardSetAttrib");
 	}
 	return pOrigSCardSetAttrib(hCard, dwAttrId, pbAttr, cbAttrLen);
 }
@@ -288,7 +327,7 @@ pHookSCardControl(
 )
 {
 	if (logger) {
-		logger->TraceInfo("SCardControl");
+		logger->TraceInfo("    SCardControl");
 	}
 	return pOrigSCardControl(hCard, dwControlCode, lpInBuffer, cbInBufferSize, lpOutBuffer, cbOutBufferSize, lpBytesReturned);
 }
@@ -302,7 +341,7 @@ pHookSCardGetTransmitCount(
 	_Out_ LPDWORD pcTransmitCount)
 {
 	if (logger) {
-		logger->TraceInfo("SCardGetTransmitCount");
+		logger->TraceInfo("    SCardGetTransmitCount");
 	}
 	return pOrigSCardGetTransmitCount(hCard, pcTransmitCount);
 
