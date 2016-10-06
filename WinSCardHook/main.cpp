@@ -76,7 +76,6 @@ PFN_SCARD_GET_TRANSMIT_COUNT		pOrigSCardGetTransmitCount = NULL;
 
 //scardRetVal2String
 const char* scardRetVal2String(DWORD dwRet) {
-	char buf[MAX_PATH];
 	switch (dwRet)
 	{
 	case SCARD_S_SUCCESS:	return "SCARD_S_SUCCESS";
@@ -147,35 +146,29 @@ const char* scardRetVal2String(DWORD dwRet) {
 	case SCARD_W_UNRESPONSIVE_CARD:	return "SCARD_W_UNRESPONSIVE_CARD";
 	case SCARD_W_UNSUPPORTED_CARD:	return "SCARD_W_UNSUPPORTED_CARD";
 	case SCARD_W_WRONG_CHV:	return "SCARD_W_WRONG_CHV";
+	default: return "DEFINED";
 	}
-	sprintf(buf, "UNDEFINED: 0x%x", dwRet);
-	return buf;
 }
 //scope2String
 const char* scope2String(DWORD dwScope) {
-	char buf[MAX_PATH];
 	switch (dwScope)
 	{
 	case SCARD_AUTOALLOCATE: return "SCARD_AUTOALLOCATE";
 	case SCARD_SCOPE_USER: return "SCARD_SCOPE_USER";
 	case SCARD_SCOPE_TERMINAL: return "SCARD_SCOPE_TERMINAL";
 	case SCARD_SCOPE_SYSTEM: return "SCARD_SCOPE_SYSTEM";
+	default: return "DEFINED";
 	}
-	sprintf(buf, "UNDEFINED: 0x%x", dwScope);
-	return buf;
 }
 //shareMode2String
 const char* shareMode2String(DWORD dwShareMode) {
-	char buf[MAX_PATH];
 	switch (dwShareMode)
 	{
 	case SCARD_SHARE_SHARED: return "SCARD_SHARE_SHARED";
 	case SCARD_SHARE_EXCLUSIVE: return "SCARD_SHARE_EXCLUSIVE";
 	case SCARD_SHARE_DIRECT: return "SCARD_SHARE_DIRECT";
+	default: return "DEFINED";
 	}
-	memset(buf, 0, sizeof(buf));
-	sprintf(buf, "UNDEFINED: 0x%x", dwShareMode);
-	return buf;
 }
 //protocols2String
 char* protocols2String(char* pbuf, DWORD dwProto) {
@@ -191,16 +184,13 @@ char* protocols2String(char* pbuf, DWORD dwProto) {
 }
 //cardActionTaken2String
 const char* cardActionTaken2String(DWORD dwAction) {
-	char buf[MAX_PATH];
 	switch (dwAction) {
 	case SCARD_LEAVE_CARD: return "SCARD_LEAVE_CARD";
 	case SCARD_RESET_CARD: return "SCARD_RESET_CARD";
 	case SCARD_UNPOWER_CARD: return "SCARD_UNPOWER_CARD";
 	case SCARD_EJECT_CARD: return "SCARD_EJECT_CARD";
+	default: return "DEFINED";
 	}
-	memset(buf, 0, sizeof(buf));
-	sprintf(buf, "UNDEFINED: 0x%x", dwAction);
-	return buf;
 }
 
 
@@ -216,12 +206,7 @@ pHookSCardEstablishContext(
 	LONG ret;
 	if (logger) {
 		logger->TraceInfo("--- SCardEstablishContext ---");
-		switch (dwScope) {
-		case SCARD_SCOPE_USER:     logger->TraceInfo("    IN dwScope: SCARD_SCOPE_USER"); break;
-		case SCARD_SCOPE_TERMINAL: logger->TraceInfo("    IN dwScope: SCARD_SCOPE_TERMINAL"); break;
-		case SCARD_SCOPE_SYSTEM:   logger->TraceInfo("    IN dwScope: SCARD_SCOPE_SYSTEM"); break;
-		default:                   logger->TraceInfo("    IN dwScope: undefined");
-		}
+		logger->TraceInfo("    IN dwScope: %s", scope2String(dwScope));
 	}
 	ret = pOrigSCardEstablishContext(dwScope, pvReserved1, pvReserved2, phContext);
 	if (logger) {
