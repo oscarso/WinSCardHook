@@ -13,10 +13,10 @@
 #if 0
 #define				APP_HOOKING		L"C:\\pivman\\yubico-piv-tool.exe"
 #endif
-#if 0
+#if 1
 #define				APP_HOOKING		L"C:\\Yubico\\open_src_my\\ykpiv_test\\x64\\Debug\\ykpiv_test.exe"
 #endif
-#if 1
+#if 0
 #define				APP_HOOKING		L"C:\\Yubico\\open_src_my\\SCMiniDriverTest\\x64\\Debug\\SCMiniDriverTest.exe"
 #endif
 
@@ -79,7 +79,6 @@ const char* scardRetVal2String(DWORD dwRet) {
 	switch (dwRet)
 	{
 	case SCARD_S_SUCCESS:	return "SCARD_S_SUCCESS";
-	case ERROR_BROKEN_PIPE:	return "ERROR_BROKEN_PIPE";
 	case SCARD_E_BAD_SEEK:	return "SCARD_E_BAD_SEEK";
 	case SCARD_E_CANCELLED:	return "SCARD_E_CANCELLED";
 	case SCARD_E_CANT_DISPOSE:	return "SCARD_E_CANT_DISPOSE";
@@ -146,7 +145,11 @@ const char* scardRetVal2String(DWORD dwRet) {
 	case SCARD_W_UNRESPONSIVE_CARD:	return "SCARD_W_UNRESPONSIVE_CARD";
 	case SCARD_W_UNSUPPORTED_CARD:	return "SCARD_W_UNSUPPORTED_CARD";
 	case SCARD_W_WRONG_CHV:	return "SCARD_W_WRONG_CHV";
-	default: return "DEFINED";
+
+	case ERROR_BROKEN_PIPE:	return "ERROR_BROKEN_PIPE";
+	case ERROR_INVALID_HANDLE: return "ERROR_INVALID_HANDLE";
+
+	default: return "UNDEFINED";
 	}
 }
 //scope2String
@@ -157,7 +160,7 @@ const char* scope2String(DWORD dwScope) {
 	case SCARD_SCOPE_USER: return "SCARD_SCOPE_USER";
 	case SCARD_SCOPE_TERMINAL: return "SCARD_SCOPE_TERMINAL";
 	case SCARD_SCOPE_SYSTEM: return "SCARD_SCOPE_SYSTEM";
-	default: return "DEFINED";
+	default: return "UNDEFINED";
 	}
 }
 //shareMode2String
@@ -167,7 +170,7 @@ const char* shareMode2String(DWORD dwShareMode) {
 	case SCARD_SHARE_SHARED: return "SCARD_SHARE_SHARED";
 	case SCARD_SHARE_EXCLUSIVE: return "SCARD_SHARE_EXCLUSIVE";
 	case SCARD_SHARE_DIRECT: return "SCARD_SHARE_DIRECT";
-	default: return "DEFINED";
+	default: return "UNDEFINED";
 	}
 }
 //protocols2String
@@ -189,7 +192,7 @@ const char* cardActionTaken2String(DWORD dwAction) {
 	case SCARD_RESET_CARD: return "SCARD_RESET_CARD";
 	case SCARD_UNPOWER_CARD: return "SCARD_UNPOWER_CARD";
 	case SCARD_EJECT_CARD: return "SCARD_EJECT_CARD";
-	default: return "DEFINED";
+	default: return "UNDEFINED";
 	}
 }
 
